@@ -82,7 +82,9 @@ function Write-SubTitle {
     param([string]$Text)
     try {
         Write-Line ''
-        Write-Line ("-- $Text " + ('-' * [Math]::Max(1, 66 - $Text.Length))) DarkCyan
+        $dashCount = 66 - $Text.Length
+        if ($dashCount -lt 1) { $dashCount = 1 }
+        Write-Line ("-- $Text " + ('-' * $dashCount)) DarkCyan
     } catch {
         Write-Line $Text DarkCyan
     }
@@ -206,8 +208,12 @@ function Write-Bar {
             return
         }
         $raw    = [double]$Value
-        $pct    = [Math]::Max(0,[Math]::Min(100,($raw/$Max)*100))
-        $filled = [int][Math]::Min(20,[Math]::Round($pct/5))
+        $pct = ($raw / $Max) * 100
+        if ($pct -lt 0) { $pct = 0 }
+        elseif ($pct -gt 100) { $pct = 100 }
+        $filled = [int][Math]::Round($pct / 5)
+        if ($filled -lt 0) { $filled = 0 }
+        elseif ($filled -gt 20) { $filled = 20 }
         $bar    = ("$([char]0x2588)" * $filled) + ("$([char]0x2591)" * (20-$filled))
         $vText  = if ($Suffix -eq '') { '{0:N1}' -f $raw } else { '{0:N1}{1}' -f $raw,$Suffix }
         $color  = [ConsoleColor]::Green
@@ -455,7 +461,8 @@ function Get-HealthScore {
         elseif ($TempC -ge 75) { $score -= 1 }
     }
 
-    $score = [Math]::Max(0,[Math]::Min(100,$score))
+    if ($score -lt 0) { $score = 0 }
+    elseif ($score -gt 100) { $score = 100 }
     $grade = switch ([int]$score) {
         { $_ -ge 90 } { 'A  EXCELLENT'; break }
         { $_ -ge 75 } { 'B  GOOD'; break }
@@ -871,7 +878,10 @@ function Show-NetworkDiag {
         }
     }
     if ($okCount -gt 0) {
-        $netScore = [Math]::Max(0, 100 - ([Math]::Min(200,($totalAvg/$okCount)) / 2))
+        $avgPing = $totalAvg / $okCount
+        if ($avgPing -gt 200) { $avgPing = 200 }
+        $netScore = 100 - ($avgPing / 2)
+        if ($netScore -lt 0) { $netScore = 0 }
         $netGrade = if ($netScore -ge 85) {'EXCELLENT'} elseif ($netScore -ge 65) {'GOOD'} elseif ($netScore -ge 45) {'FAIR'} else {'POOR'}
         Write-Line ''
         Write-Line "Network Quality Score: $([int]$netScore)/100  [$netGrade]" $(if ($netScore -ge 65) {'Green'} else {'Yellow'})
@@ -1110,7 +1120,8 @@ public class NexusNtMem {
             $status = [NexusNtMem]::NtSetSystemInformation([NexusNtMem]::SystemMemoryListInformation, [ref]$val, 4)
             Start-Sleep -Milliseconds 800
             $standbyAfter = Get-StandbyBytes
-            $standbyFreed = [Math]::Max([double]0, ([double]$standbyBefore - [double]$standbyAfter))
+            $standbyFreed = $standbyBefore - $standbyAfter
+            if ($standbyFreed -lt 0) { $standbyFreed = 0 }
             if ($status -eq 0) {
                 Write-Line "    Standby list purged successfully. Freed ~$(Format-Bytes $standbyFreed)." Green
             } else {
@@ -1123,7 +1134,8 @@ public class NexusNtMem {
 
     Start-Sleep -Milliseconds 1500
     $memAfter = Get-MemStats
-    $freed    = [Math]::Max([double]0, ([double]$memBefore.UsedBytes - [double]$memAfter.UsedBytes))
+    $freed = $memBefore.UsedBytes - $memAfter.UsedBytes
+    if ($freed -lt 0) { $freed = 0 }
 
     Write-Line ''
     Write-Line "RAM after  : $(Format-Bytes $memAfter.UsedBytes) used  ($(Format-Pct $memAfter.UsedPct))" Green
