@@ -951,7 +951,8 @@ function Invoke-CachePurge {
     }
 
     $after = Get-TotalCacheSize
-    $freed = [Math]::Max(0, $before - $after)
+    $freed = $before - $after
+    if ($freed -lt 0) { $freed = 0 }
     Write-Line ''
     Write-Line "Cache after  : $(Format-Bytes $after)" Green
     Write-Line "Freed        : $(Format-Bytes $freed)" Green
