@@ -334,6 +334,28 @@ function Get-CacheMap {
         $m['Telegram Cache']              = "$env:APPDATA\Telegram Desktop\tdata\user_data\cache"
         $m['VS Code Cache']               = "$env:APPDATA\Code\Cache"
         $m['VS Code GPU Cache']           = "$env:APPDATA\Code\GPUCache"
+        
+        # Dynamic search for other Electron GPU/shader caches to prevent stale shader crashes in other apps
+        $targetDirs = New-Object System.Collections.Generic.List[string]
+        
+        $gpuCaches = Get-ChildItem -Path "$env:APPDATA", "$env:LOCALAPPDATA" -Filter "GPUCache" -Directory -Recurse -Depth 3 -ErrorAction SilentlyContinue
+        if ($gpuCaches) { foreach ($d in $gpuCaches) { if ($d -and $d.FullName) { [void]$targetDirs.Add($d.FullName) } } }
+        
+        $dawnGraphite = Get-ChildItem -Path "$env:APPDATA", "$env:LOCALAPPDATA" -Filter "DawnGraphiteCache" -Directory -Recurse -Depth 3 -ErrorAction SilentlyContinue
+        if ($dawnGraphite) { foreach ($d in $dawnGraphite) { if ($d -and $d.FullName) { [void]$targetDirs.Add($d.FullName) } } }
+        
+        $dawnWebGpu = Get-ChildItem -Path "$env:APPDATA", "$env:LOCALAPPDATA" -Filter "DawnWebGPUCache" -Directory -Recurse -Depth 3 -ErrorAction SilentlyContinue
+        if ($dawnWebGpu) { foreach ($d in $dawnWebGpu) { if ($d -and $d.FullName) { [void]$targetDirs.Add($d.FullName) } } }
+        
+        foreach ($path in $targetDirs) {
+            $parentName = Split-Path -Parent $path | Split-Path -Leaf
+            $leafName = Split-Path -Leaf $path
+            $key = "App Cache ($parentName - $leafName)"
+            if (-not $m.Contains($key)) {
+                $m[$key] = $path
+            }
+        }
+
         return $m
     } catch { return [ordered]@{} }
 }
@@ -344,9 +366,11 @@ function Get-FolderSize {
     param([string]$Path)
     if (-not (Test-Path -LiteralPath $Path)) { return 0 }
     try {
-        $s = (Get-ChildItem -LiteralPath $Path -Force -Recurse -EA SilentlyContinue |
+        $measure = Get-ChildItem -LiteralPath $Path -Force -Recurse -EA SilentlyContinue |
             Where-Object { -not $_.PSIsContainer -and -not (Test-ReparsePoint $_) } |
-            Measure-Object -Property Length -Sum).Sum
+            Measure-Object -Property Length -Sum
+        if ($null -eq $measure) { return 0 }
+        $s = $measure.Sum
         if ($null -eq $s) { return 0 }
         return [double]$s
     } catch { return 0 }
@@ -697,12 +721,21 @@ function Show-SystemHealth {
 function Show-TopProcesses {
     Write-Title 'TOP RESOURCE PROCESSES'
     $procs = @(Get-Process -EA SilentlyContinue | ForEach-Object {
+        $time = $null
+        try { $time = $_.TotalProcessorTime } catch {}
+        
+        $ws = 0.0
+        try { $ws = [double]$_.WorkingSet64 } catch {}
+        
+        $wsFormatted = '0 B'
+        try { $wsFormatted = Format-Bytes $_.WorkingSet64 } catch {}
+
         [pscustomobject]@{
             Name = $_.ProcessName
             Id   = $_.Id
-            CPU  = $(try { [Math]::Round($_.TotalProcessorTime.TotalSeconds,2) } catch { 0.0 })
-            RAM  = $(try { [double]$_.WorkingSet64 } catch { 0.0 })
-            RAMF = $(try { Format-Bytes $_.WorkingSet64 } catch { '0 B' })
+            CPU  = $(if ($null -ne $time) { [Math]::Round($time.TotalSeconds,2) } else { 0.0 })
+            RAM  = $ws
+            RAMF = $wsFormatted
         }
     })
 
