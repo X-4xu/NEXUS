@@ -1,4 +1,6 @@
-# NEXUS — Safe Windows Optimizer & Latency Reducer
+<p align="center">
+  <img src="assets/banner.png" alt="NEXUS Banner" width="100%" style="border-radius: 8px;">
+</p>
 
 <p align="center">
   <a href="https://github.com/X-4xu/NEXUS/releases/latest"><img src="https://img.shields.io/badge/Release-v1.0.0-0284C7?style=for-the-badge" alt="Release: v1.0.0"></a>
