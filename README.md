@@ -1,10 +1,11 @@
-# <p align="center"><img src="assets/banner.png" alt="NEXUS Banner" width="100%"></p>
+# <p align="center"><img src="assets/banner.svg" alt="NEXUS Banner" width="100%"></p>
 
 <p align="center">
+  <a href="https://github.com/X-4xu/NEXUS/releases/latest"><img src="https://img.shields.io/badge/Release-v1.0.0-0284C7?style=for-the-badge" alt="Release: v1.0.0"></a>
   <img src="https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0082FC?style=for-the-badge&logo=windows&logoColor=white" alt="Platform: Windows">
   <img src="https://img.shields.io/badge/Language-PowerShell%205.1%2B-1786C4?style=for-the-badge&logo=powershell&logoColor=white" alt="Language: PowerShell">
   <img src="https://img.shields.io/badge/Safety-100%25%20Safe%20Beast-2EA44F?style=for-the-badge&logo=target" alt="Safety: 100% Safe">
-  <img src="https://img.shields.io/github/license/X-4xu/NEXUS?style=for-the-badge&color=orange" alt="License">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/X-4xu/NEXUS?style=for-the-badge&color=orange" alt="License"></a>
 </p>
 
 ---
